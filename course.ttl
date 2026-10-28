@@ -1,0 +1,53 @@
+@prefix rdfa: <http://www.w3.org/ns/rdfa#> .
+@prefix ns0: <https://schema.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://njh.me/> rdfa:usesVocabulary <https://schema.org/> .
+<http://njh.me/#instance2026>
+  a <https://schema.org/CourseInstance> ;
+  ns0:location "Milan, Italy" ;
+  ns0:courseMode "Onsite" ;
+  ns0:instructor [
+    a ns0:Person ;
+    ns0:name "Matteo Belcao" ;
+    ns0:email "matteo.belcao@quantiaconsulting.com"
+  ] ;
+  ns0:courseWorkload "PT15H" ;
+  ns0:startDate "2026-05-13"^^xsd:date ;
+  ns0:endDate "2026-05-19"^^xsd:date .
+
+<http://njh.me/#instance2027>
+  a ns0:CourseInstance ;
+  ns0:startDate "2027-05-01"^^xsd:date .
+
+[]
+  a ns0:Course ;
+  ns0:name "Semantic Technologies" ;
+  ns0:description """This course is part of the Master BADS taught at Polimi GSoM, the Politecnico di
+         Milano Business School. 
+      Students will learn about the logic behind RDF and OWL, learning the use of SPARQL and how to apply these concepts
+      by using Ontop in the field of big data.""" ;
+  ns0:provider [
+    a ns0:CollegeOrUniversity ;
+    ns0:name "Politecnico di Milano - Graduate School of Management"
+  ] ;
+  ns0:hasCourseInstance <http://njh.me/#instance2026>, <http://njh.me/#instance2027> ;
+  ns0:inLanguage "en" ;
+  ns0:numberOfCredits 2 ;
+  ns0:courseCode "ST-BADS-GSOM-POLIMI" ;
+  ns0:offers [
+    a ns0:Offer ;
+    ns0:priceCurrency "EUR" ;
+    ns0:price 0.0
+  ], [
+    a ns0:Offer ;
+    ns0:priceCurrency "EUR" ;
+    ns0:price 800.0
+  ] ;
+  ns0:coursePrerequisites "basic programming", "basic logic", "basic databases" ;
+  ns0:aggregateRating [
+    a ns0:AggregateRating ;
+    ns0:ratingValue 4.6 ;
+    ns0:bestRating 5.0 ;
+    ns0:ratingCount 134
+  ] .

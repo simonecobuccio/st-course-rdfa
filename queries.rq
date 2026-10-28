@@ -1,0 +1,176 @@
+# SPARQL queries on the Semantic Technologies course graph (course.ttl)
+# Group 6: Cambier, Cobuccio, Ferrara, Tissino
+#
+# Load course.ttl in the RDF Playground, then run one query at a time
+# with the PREFIX lines below on top.
+
+PREFIX schema: <https://schema.org/>
+PREFIX xsd:    <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex:     <http://example.org/bads/>
+
+
+# =====================================================================
+# QUERY 1 - SELECT: core properties of the course
+# =====================================================================
+
+SELECT ?name ?credits ?code ?language
+WHERE {
+  ?course a schema:Course ;
+          schema:name            ?name ;
+          schema:numberOfCredits ?credits ;
+          schema:courseCode      ?code ;
+          schema:inLanguage      ?language .
+}
+
+
+# =====================================================================
+# QUERY 2 - JOIN: instructor of the course (Course > CourseInstance > Person)
+# =====================================================================
+# STR() compares the plain string, so the filter also works when the
+# name literal carries a language tag (e.g. "Semantic Technologies"@en).
+
+SELECT ?courseName ?instructorName ?instructorEmail
+WHERE {
+  ?course a schema:Course ;
+          schema:name              ?courseName ;
+          schema:hasCourseInstance ?instance .
+
+  ?instance schema:instructor ?instructor .
+
+  ?instructor schema:name  ?instructorName ;
+              schema:email ?instructorEmail .
+
+  FILTER(STR(?courseName) = "Semantic Technologies")
+}
+
+
+# =====================================================================
+# QUERY 3 - FILTER on numbers: paid offers only
+# =====================================================================
+# Works because prices are typed as xsd:decimal in the RDFa markup.
+
+SELECT ?courseName ?price ?currency
+WHERE {
+  ?course a schema:Course ;
+          schema:name   ?courseName ;
+          schema:offers ?offer .
+
+  ?offer schema:price         ?price ;
+         schema:priceCurrency ?currency .
+
+  FILTER(?price > 0)
+}
+
+
+# =====================================================================
+# QUERY 4 - FILTER on dates: editions starting after 2026
+# =====================================================================
+# Both sides of the comparison are xsd:date literals.
+
+SELECT (STR(?instance) AS ?cleanInstance)
+       (STR(?startDate) AS ?cleanStartDate)
+WHERE {
+  ?course a schema:Course ;
+          schema:hasCourseInstance ?instance .
+
+  ?instance schema:startDate ?startDate .
+
+  FILTER(?startDate > "2026-12-31"^^xsd:date)
+}
+
+
+# =====================================================================
+# QUERY 5 - OPTIONAL: all editions, even with missing properties
+# =====================================================================
+# The 2027 edition only has a start date. Separate OPTIONAL blocks keep
+# each property independent, so one missing value does not hide the others.
+
+SELECT (STR(?instance)   AS ?cleanInstance)
+       (STR(?startDate)  AS ?cleanStartDate)
+       (STR(?endDate)    AS ?cleanEndDate)
+       (STR(?location)   AS ?cleanLocation)
+       (STR(?courseMode) AS ?cleanMode)
+WHERE {
+  ?course a schema:Course ;
+          schema:hasCourseInstance ?instance .
+
+  ?instance schema:startDate ?startDate .
+
+  OPTIONAL { ?instance schema:endDate    ?endDate . }
+  OPTIONAL { ?instance schema:location   ?location . }
+  OPTIONAL { ?instance schema:courseMode ?courseMode . }
+}
+
+
+# =====================================================================
+# QUERY 6 - Aggregates: COUNT, AVG, MIN and MAX of the offers
+# =====================================================================
+
+SELECT ?courseName
+       (COUNT(?offer) AS ?numOffers)
+       (AVG(?price)   AS ?avgPrice)
+       (MIN(?price)   AS ?minPrice)
+       (MAX(?price)   AS ?maxPrice)
+WHERE {
+  ?course a schema:Course ;
+          schema:name   ?courseName ;
+          schema:offers ?offer .
+  ?offer schema:price ?price .
+}
+GROUP BY ?courseName
+
+
+# =====================================================================
+# QUERY 7 - UNION: course code and language in a single column
+# =====================================================================
+
+SELECT ?value
+WHERE {
+  { ?course schema:courseCode ?value }
+  UNION
+  { ?course schema:inLanguage ?value }
+}
+
+
+# =====================================================================
+# QUERY 8 - ORDER BY and LIMIT: cheapest offer
+# =====================================================================
+
+SELECT ?price
+WHERE {
+  ?course schema:offers ?offer .
+  ?offer  schema:price  ?price .
+}
+ORDER BY ASC(?price)
+LIMIT 1
+
+
+# =====================================================================
+# QUERY 9 (extra) - CONSTRUCT: derive new triples
+# =====================================================================
+# Every instructor of a course becomes an ex:BADSInstructor that
+# ex:teaches the course, a manual version of RDFS subclass inference.
+
+CONSTRUCT {
+  ?instructor a ex:BADSInstructor ;
+              ex:teaches ?courseName .
+}
+WHERE {
+  ?course a schema:Course ;
+          schema:name              ?courseName ;
+          schema:hasCourseInstance ?instance .
+
+  ?instance schema:instructor ?instructor .
+}
+
+
+# =====================================================================
+# QUERY 10 (extra) - Multi-valued property: course prerequisites
+# =====================================================================
+
+SELECT ?courseName ?prerequisite
+WHERE {
+  ?course a schema:Course ;
+          schema:name                ?courseName ;
+          schema:coursePrerequisites ?prerequisite .
+}
